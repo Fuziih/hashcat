@@ -1655,7 +1655,7 @@ int hashcat_session_execute (hashcat_ctx_t *hashcat_ctx)
         }
         else
         {
-          event_log_info (hashcat_ctx, "%u", usage_sort_buf[i].hash_mode);
+          event_log_info (hashcat_ctx, "%-51s", usage_sort_buf[i].hash_name);
         }
 
         hcfree (usage_sort_buf[i].hash_name);
@@ -1687,7 +1687,7 @@ int hashcat_session_execute (hashcat_ctx_t *hashcat_ctx)
     {
       if (user_options->machine_readable == true)
       {
-        event_log_info (hashcat_ctx, "%u", usage_sort_buf[0].hash_mode);
+        event_log_info (hashcat_ctx, "%-51s", usage_sort_buf[0].hash_name);
       }
       else
       {
