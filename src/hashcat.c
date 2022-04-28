@@ -1632,9 +1632,9 @@ int hashcat_session_execute (hashcat_ctx_t *hashcat_ctx)
 
     if (modes_cnt <= 0)
     {
-      if (user_options->show == false) event_log_error (hashcat_ctx, "No hash-mode matches the structure of the input hash.");
+      if (user_options->show == false) event_log_error (hashcat_ctx, "");
 
-      return -1;
+      return 0;
     }
 
     if (modes_cnt > 1)
