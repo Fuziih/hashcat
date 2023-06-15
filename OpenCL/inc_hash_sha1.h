@@ -3,8 +3,8 @@
  * License.....: MIT
  */
 
-#ifndef _INC_HASH_SHA1_H
-#define _INC_HASH_SHA1_H
+#ifndef INC_HASH_SHA1_H
+#define INC_HASH_SHA1_H
 
 #define SHA1_F0(x,y,z)  ((z) ^ ((x) & ((y) ^ (z))))
 #define SHA1_F1(x,y,z)  ((x) ^ (y) ^ (z))
@@ -99,6 +99,7 @@ DECLSPEC void sha1_update_utf16le (PRIVATE_AS sha1_ctx_t *ctx, PRIVATE_AS const 
 DECLSPEC void sha1_update_utf16le_swap (PRIVATE_AS sha1_ctx_t *ctx, PRIVATE_AS const u32 *w, const int len);
 DECLSPEC void sha1_update_utf16be (PRIVATE_AS sha1_ctx_t *ctx, PRIVATE_AS const u32 *w, const int len);
 DECLSPEC void sha1_update_utf16be_swap (PRIVATE_AS sha1_ctx_t *ctx, PRIVATE_AS const u32 *w, const int len);
+DECLSPEC void sha1_update_utf16beN (PRIVATE_AS sha1_ctx_t *ctx, PRIVATE_AS const u32 *w, const int len);
 DECLSPEC void sha1_update_global (PRIVATE_AS sha1_ctx_t *ctx, GLOBAL_AS const u32 *w, const int len);
 DECLSPEC void sha1_update_global_swap (PRIVATE_AS sha1_ctx_t *ctx, GLOBAL_AS const u32 *w, const int len);
 DECLSPEC void sha1_update_global_utf16le (PRIVATE_AS sha1_ctx_t *ctx, GLOBAL_AS const u32 *w, const int len);
@@ -111,6 +112,7 @@ DECLSPEC void sha1_hmac_init (PRIVATE_AS sha1_hmac_ctx_t *ctx, PRIVATE_AS const 
 DECLSPEC void sha1_hmac_init_swap (PRIVATE_AS sha1_hmac_ctx_t *ctx, PRIVATE_AS const u32 *w, const int len);
 DECLSPEC void sha1_hmac_init_global (PRIVATE_AS sha1_hmac_ctx_t *ctx, GLOBAL_AS const u32 *w, const int len);
 DECLSPEC void sha1_hmac_init_global_swap (PRIVATE_AS sha1_hmac_ctx_t *ctx, GLOBAL_AS const u32 *w, const int len);
+DECLSPEC void sha1_hmac_init_global_utf16le_swap (PRIVATE_AS sha1_hmac_ctx_t *ctx, GLOBAL_AS const u32 *w, const int len);
 DECLSPEC void sha1_hmac_update_64 (PRIVATE_AS sha1_hmac_ctx_t *ctx, PRIVATE_AS u32 *w0, PRIVATE_AS u32 *w1, PRIVATE_AS u32 *w2, PRIVATE_AS u32 *w3, const int len);
 DECLSPEC void sha1_hmac_update (PRIVATE_AS sha1_hmac_ctx_t *ctx, PRIVATE_AS const u32 *w, const int len);
 DECLSPEC void sha1_hmac_update_swap (PRIVATE_AS sha1_hmac_ctx_t *ctx, PRIVATE_AS const u32 *w, const int len);

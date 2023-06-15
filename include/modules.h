@@ -1,6 +1,6 @@
 
-#ifndef _MODULES_H
-#define _MODULES_H
+#ifndef HC_MODULES_H
+#define HC_MODULES_H
 
 static const size_t MODULE_CONTEXT_SIZE_CURRENT = sizeof (module_ctx_t);
 
@@ -10,6 +10,7 @@ u32         module_attack_exec              (MAYBE_UNUSED const hashconfig_t *ha
 void       *module_benchmark_esalt          (MAYBE_UNUSED const hashconfig_t *hashconfig, MAYBE_UNUSED const user_options_t *user_options, MAYBE_UNUSED const user_options_extra_t *user_options_extra);
 void       *module_benchmark_hook_salt      (MAYBE_UNUSED const hashconfig_t *hashconfig, MAYBE_UNUSED const user_options_t *user_options, MAYBE_UNUSED const user_options_extra_t *user_options_extra);
 const char *module_benchmark_mask           (MAYBE_UNUSED const hashconfig_t *hashconfig, MAYBE_UNUSED const user_options_t *user_options, MAYBE_UNUSED const user_options_extra_t *user_options_extra);
+const char *module_benchmark_charset        (MAYBE_UNUSED const hashconfig_t *hashconfig, MAYBE_UNUSED const user_options_t *user_options, MAYBE_UNUSED const user_options_extra_t *user_options_extra);
 salt_t     *module_benchmark_salt           (MAYBE_UNUSED const hashconfig_t *hashconfig, MAYBE_UNUSED const user_options_t *user_options, MAYBE_UNUSED const user_options_extra_t *user_options_extra);
 const char *module_deprecated_notice        (MAYBE_UNUSED const hashconfig_t *hashconfig, MAYBE_UNUSED const user_options_t *user_options, MAYBE_UNUSED const user_options_extra_t *user_options_extra);
 bool        module_dictstat_disable         (MAYBE_UNUSED const hashconfig_t *hashconfig, MAYBE_UNUSED const user_options_t *user_options, MAYBE_UNUSED const user_options_extra_t *user_options_extra);
@@ -87,4 +88,4 @@ bool        module_unstable_warning         (MAYBE_UNUSED const hashconfig_t *ha
 
 bool        module_potfile_custom_check     (MAYBE_UNUSED const hashconfig_t *hashconfig, MAYBE_UNUSED const hash_t *db, MAYBE_UNUSED const hash_t *entry_hash, MAYBE_UNUSED const void *entry_tmps);
 
-#endif // _MODULES_H
+#endif // HC_MODULES_H

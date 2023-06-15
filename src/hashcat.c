@@ -364,12 +364,12 @@ static int inner2_loop (hashcat_ctx_t *hashcat_ctx)
   if (status_ctx->devices_status == STATUS_EXHAUSTED)
   {
     // the options speed-only and progress-only cause hashcat to abort quickly.
-    // therefore, they will end up (if no other error occured) as STATUS_EXHAUSTED.
+    // therefore, they will end up (if no other error occurred) as STATUS_EXHAUSTED.
     // however, that can create confusion in hashcats RC, because exhausted translates to RC = 1.
-    // but then having RC = 1 does not match our expection if we use for speed-only and progress-only.
+    // but then having RC = 1 does not match our exception if we use for speed-only and progress-only.
     // to get hashcat to return RC = 0 we have to set it to CRACKED or BYPASS
     // note: other options like --show, --left, --benchmark, --keyspace, --backend-info, etc.
-    // not not reach this section of the code, they've returned already with rc 0.
+    // do not reach this section of the code, they've returned already with rc 0.
 
     if ((user_options->speed_only == true) || (user_options->progress_only == true))
     {
@@ -394,6 +394,10 @@ static int inner2_loop (hashcat_ctx_t *hashcat_ctx)
   }
 
   status_ctx->accessible = false;
+
+  // update newly cracked hashes per session
+
+  logfile_sub_uint (hashes->digests_done_new);
 
   EVENT (EVENT_CRACKER_FINISHED);
 
@@ -764,13 +768,13 @@ static int outer_loop (hashcat_ctx_t *hashcat_ctx)
   if (straight_ctx_init (hashcat_ctx) == -1) return -1;
 
   /**
-   * straight mode init
+   * combinator mode init
    */
 
   if (combinator_ctx_init (hashcat_ctx) == -1) return -1;
 
   /**
-   * charsets : keep them together for more easy maintainnce
+   * charsets : keep them together for more easy maintenance
    */
 
   if (mask_ctx_init (hashcat_ctx) == -1) return -1;
@@ -783,7 +787,7 @@ static int outer_loop (hashcat_ctx_t *hashcat_ctx)
   {
     if ((mask_ctx->masks_cnt > 1) || (straight_ctx->dicts_cnt > 1))
     {
-      event_log_error (hashcat_ctx, "Use of --skip/--limit is not supported with --increment or mask files.");
+      event_log_error (hashcat_ctx, "Use of --skip/--limit is not supported with --increment, mask files, or --stdout.");
 
       return -1;
     }
@@ -801,6 +805,17 @@ static int outer_loop (hashcat_ctx_t *hashcat_ctx)
 
       return -1;
     }
+  }
+
+  /**
+   * prevent the user from using -m/--hash-type together with --stdout
+   */
+
+  if (user_options->hash_mode_chgd == true && user_options->stdout_flag == true)
+  {
+    event_log_error (hashcat_ctx, "Use of -m/--hash-type is not supported with --stdout.");
+
+    return -1;
   }
 
   /**
@@ -908,6 +923,8 @@ static int outer_loop (hashcat_ctx_t *hashcat_ctx)
 
         event_log_warning (hashcat_ctx, "You can use --self-test-disable to override, but do not report related errors.");
         event_log_warning (hashcat_ctx, NULL);
+
+        backend_ctx->self_test_warnings = true;
 
         return -1;
       }
@@ -1387,12 +1404,18 @@ bool autodetect_hashmode_test (hashcat_ctx_t *hashcat_ctx)
   hash_info->orighash = (char *) hcmalloc (256);
   hash_info->split = (split_t *) hcmalloc (sizeof (split_t));
 
-  hash_t *hashes_buf = (hash_t *) hcmalloc (sizeof (hash_t));
+  // this is required for multi hash iterations in binary files, for instance used in -m 14600
+  #define HASHES_IN_BINARY 10
 
-  hashes_buf->digest    = digest;
-  hashes_buf->salt      = salt;
-  hashes_buf->esalt     = esalt;
-  hashes_buf->hook_salt = hook_salt;
+  hash_t *hashes_buf = (hash_t *) hccalloc (HASHES_IN_BINARY, sizeof (hash_t));
+
+  for (int i = 0; i < HASHES_IN_BINARY; i++)
+  {
+    hashes_buf[i].digest    = digest;
+    hashes_buf[i].salt      = salt;
+    hashes_buf[i].esalt     = esalt;
+    hashes_buf[i].hook_salt = hook_salt;
+  }
 
   hashes->hashes_buf     = hashes_buf;
   hashes->digests_buf    = digest;
@@ -1643,15 +1666,15 @@ int hashcat_session_execute (hashcat_ctx_t *hashcat_ctx)
       {
         event_log_info (hashcat_ctx, "The following %d hash-modes match the structure of your input hash:", modes_cnt);
         event_log_info (hashcat_ctx, NULL);
-        event_log_info (hashcat_ctx, "      # | Name                                                | Category");
-        event_log_info (hashcat_ctx, "  ======+=====================================================+======================================");
+        event_log_info (hashcat_ctx, "      # | Name                                                       | Category");
+        event_log_info (hashcat_ctx, "  ======+============================================================+======================================");
       }
 
       for (int i = 0; i < modes_cnt; i++)
       {
         if (user_options->machine_readable == false)
         {
-          event_log_info (hashcat_ctx, "%7u | %-51s | %s", usage_sort_buf[i].hash_mode, usage_sort_buf[i].hash_name, strhashcategory (usage_sort_buf[i].hash_category));
+          event_log_info (hashcat_ctx, "%7u | %-58s | %s", usage_sort_buf[i].hash_mode, usage_sort_buf[i].hash_name, strhashcategory (usage_sort_buf[i].hash_category));
         }
         else
         {
@@ -1693,9 +1716,9 @@ int hashcat_session_execute (hashcat_ctx_t *hashcat_ctx)
       {
         event_log_info (hashcat_ctx, "The following hash-mode match the structure of your input hash:");
         event_log_info (hashcat_ctx, NULL);
-        event_log_info (hashcat_ctx, "      # | Name                                                | Category");
-        event_log_info (hashcat_ctx, "  ======+=====================================================+======================================");
-        event_log_info (hashcat_ctx, "%7u | %-51s | %s", usage_sort_buf[0].hash_mode, usage_sort_buf[0].hash_name, strhashcategory (usage_sort_buf[0].hash_category));
+        event_log_info (hashcat_ctx, "      # | Name                                                       | Category");
+        event_log_info (hashcat_ctx, "  ======+============================================================+======================================");
+        event_log_info (hashcat_ctx, "%7u | %-58s | %s", usage_sort_buf[0].hash_mode, usage_sort_buf[0].hash_name, strhashcategory (usage_sort_buf[0].hash_category));
         event_log_info (hashcat_ctx, NULL);
       }
     }
@@ -1795,18 +1818,18 @@ int hashcat_session_execute (hashcat_ctx_t *hashcat_ctx)
 
   if (rc_final == 0)
   {
-    if (status_ctx->devices_status == STATUS_ABORTED_FINISH)      rc_final =  5;
-    if (status_ctx->devices_status == STATUS_ABORTED_RUNTIME)     rc_final =  4;
-    if (status_ctx->devices_status == STATUS_ABORTED_CHECKPOINT)  rc_final =  3;
-    if (status_ctx->devices_status == STATUS_ABORTED)             rc_final =  2;
-    if (status_ctx->devices_status == STATUS_QUIT)                rc_final =  2;
-    if (status_ctx->devices_status == STATUS_EXHAUSTED)           rc_final =  1;
-    if (status_ctx->devices_status == STATUS_CRACKED)             rc_final =  0;
-    if (status_ctx->devices_status == STATUS_ERROR)               rc_final = -1;
+    if (status_ctx->devices_status == STATUS_ABORTED_FINISH)      rc_final = RC_FINAL_ABORT_FINISH;
+    if (status_ctx->devices_status == STATUS_ABORTED_RUNTIME)     rc_final = RC_FINAL_ABORT_RUNTIME;
+    if (status_ctx->devices_status == STATUS_ABORTED_CHECKPOINT)  rc_final = RC_FINAL_ABORT_CHECKPOINT;
+    if (status_ctx->devices_status == STATUS_ABORTED)             rc_final = RC_FINAL_ABORT;
+    if (status_ctx->devices_status == STATUS_QUIT)                rc_final = RC_FINAL_ABORT;
+    if (status_ctx->devices_status == STATUS_EXHAUSTED)           rc_final = RC_FINAL_EXHAUSTED;
+    if (status_ctx->devices_status == STATUS_CRACKED)             rc_final = RC_FINAL_OK;
+    if (status_ctx->devices_status == STATUS_ERROR)               rc_final = RC_FINAL_ERROR;
   }
   else if (rc_final == -1)
   {
-    // setup the new negative status code, usefull in test.sh
+    // set up the new negative status code, useful in test.sh
     // -2 is marked as used in status_codes.txt
     if (backend_ctx->runtime_skip_warning  == true)               rc_final = -3;
     if (backend_ctx->memory_hit_warning    == true)               rc_final = -4;
@@ -1815,6 +1838,7 @@ int hashcat_session_execute (hashcat_ctx_t *hashcat_ctx)
     if (backend_ctx->kernel_accel_warnings == true)               rc_final = -7;
     if (backend_ctx->extra_size_warning    == true)               rc_final = -8;
     if (backend_ctx->mixed_warnings        == true)               rc_final = -9;
+    if (backend_ctx->self_test_warnings    == true)               rc_final = -11;
   }
 
   // special case for --stdout
@@ -1928,7 +1952,10 @@ int hashcat_get_status (hashcat_ctx_t *hashcat_ctx, hashcat_status_t *hashcat_st
   hashcat_status->digests_cnt                 = status_get_digests_cnt                (hashcat_ctx);
   hashcat_status->digests_done                = status_get_digests_done               (hashcat_ctx);
   hashcat_status->digests_done_pot            = status_get_digests_done_pot           (hashcat_ctx);
+  hashcat_status->digests_done_zero           = status_get_digests_done_zero          (hashcat_ctx);
+  hashcat_status->digests_done_new            = status_get_digests_done_new           (hashcat_ctx);
   hashcat_status->digests_percent             = status_get_digests_percent            (hashcat_ctx);
+  hashcat_status->digests_percent_new         = status_get_digests_percent_new        (hashcat_ctx);
   hashcat_status->hash_target                 = status_get_hash_target                (hashcat_ctx);
   hashcat_status->hash_name                   = status_get_hash_name                  (hashcat_ctx);
   hashcat_status->guess_base                  = status_get_guess_base                 (hashcat_ctx);

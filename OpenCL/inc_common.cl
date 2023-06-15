@@ -872,12 +872,12 @@ DECLSPEC u64x hl32_to_64 (const u32x a, const u32x b)
 
 // bit rotates
 //
-// For _CPU_OPENCL_EMU_H we dont need to care about vector functions
+// For HC_CPU_OPENCL_EMU_H we dont need to care about vector functions
 // The VECT_SIZE is guaranteed to be set to 1 from cpu_opencl_emu.h
 
 DECLSPEC u32x hc_rotl32 (const u32x a, const int n)
 {
-  #if   defined _CPU_OPENCL_EMU_H
+  #if   defined HC_CPU_OPENCL_EMU_H
   return rotl32 (a, n);
   #elif defined IS_CUDA || defined IS_HIP
   return rotl32 (a, n);
@@ -892,7 +892,7 @@ DECLSPEC u32x hc_rotl32 (const u32x a, const int n)
 
 DECLSPEC u32x hc_rotr32 (const u32x a, const int n)
 {
-  #if   defined _CPU_OPENCL_EMU_H
+  #if   defined HC_CPU_OPENCL_EMU_H
   return rotr32 (a, n);
   #elif defined IS_CUDA || defined IS_HIP
   return rotr32 (a, n);
@@ -907,7 +907,7 @@ DECLSPEC u32x hc_rotr32 (const u32x a, const int n)
 
 DECLSPEC u32 hc_rotl32_S (const u32 a, const int n)
 {
-  #if   defined _CPU_OPENCL_EMU_H
+  #if   defined HC_CPU_OPENCL_EMU_H
   return rotl32 (a, n);
   #elif defined IS_CUDA || defined IS_HIP
   return rotl32_S (a, n);
@@ -922,7 +922,7 @@ DECLSPEC u32 hc_rotl32_S (const u32 a, const int n)
 
 DECLSPEC u32 hc_rotr32_S (const u32 a, const int n)
 {
-  #if   defined _CPU_OPENCL_EMU_H
+  #if   defined HC_CPU_OPENCL_EMU_H
   return rotr32 (a, n);
   #elif defined IS_CUDA || defined IS_HIP
   return rotr32_S (a, n);
@@ -937,7 +937,7 @@ DECLSPEC u32 hc_rotr32_S (const u32 a, const int n)
 
 DECLSPEC u64x hc_rotl64 (const u64x a, const int n)
 {
-  #if   defined _CPU_OPENCL_EMU_H
+  #if   defined HC_CPU_OPENCL_EMU_H
   return rotl64 (a, n);
   #elif defined IS_CUDA
   return rotl64 (a, n);
@@ -954,7 +954,7 @@ DECLSPEC u64x hc_rotl64 (const u64x a, const int n)
 
 DECLSPEC u64x hc_rotr64 (const u64x a, const int n)
 {
-  #if   defined _CPU_OPENCL_EMU_H
+  #if   defined HC_CPU_OPENCL_EMU_H
   return rotr64 (a, n);
   #elif defined IS_CUDA
   return rotr64 (a, n);
@@ -971,7 +971,7 @@ DECLSPEC u64x hc_rotr64 (const u64x a, const int n)
 
 DECLSPEC u64 hc_rotl64_S (const u64 a, const int n)
 {
-  #if   defined _CPU_OPENCL_EMU_H
+  #if   defined HC_CPU_OPENCL_EMU_H
   return rotl64 (a, n);
   #elif defined IS_CUDA
   return rotl64_S (a, n);
@@ -988,7 +988,7 @@ DECLSPEC u64 hc_rotl64_S (const u64 a, const int n)
 
 DECLSPEC u64 hc_rotr64_S (const u64 a, const int n)
 {
-  #if   defined _CPU_OPENCL_EMU_H
+  #if   defined HC_CPU_OPENCL_EMU_H
   return rotr64 (a, n);
   #elif defined IS_CUDA
   return rotr64_S (a, n);
@@ -1009,7 +1009,7 @@ DECLSPEC u32x hc_swap32 (const u32x v)
 {
   u32x r;
 
-  #ifdef _CPU_OPENCL_EMU_H
+  #ifdef HC_CPU_OPENCL_EMU_H
   r = byte_swap_32 (v);
   #else
   #if   (defined IS_AMD || defined IS_HIP) && HAS_VPERM == 1
@@ -1106,7 +1106,7 @@ DECLSPEC u32 hc_swap32_S (const u32 v)
 {
   u32 r;
 
-  #ifdef _CPU_OPENCL_EMU_H
+  #ifdef HC_CPU_OPENCL_EMU_H
   r = byte_swap_32 (v);
   #else
   #if   (defined IS_AMD || defined IS_HIP) && HAS_VPERM == 1
@@ -1132,7 +1132,7 @@ DECLSPEC u64x hc_swap64 (const u64x v)
 {
   u64x r;
 
-  #ifdef _CPU_OPENCL_EMU_H
+  #ifdef HC_CPU_OPENCL_EMU_H
   r = byte_swap_64 (v);
   #else
   #if   (defined IS_AMD || defined IS_HIP) && HAS_VPERM == 1
@@ -1317,6 +1317,16 @@ DECLSPEC u64x hc_swap64 (const u64x v)
   asm volatile ("mov.b64 %0, {%1, %2};" : "=l"(r.sf) : "r"(tr.sf), "r"(tl.sf));
   #endif
 
+  #elif defined IS_METAL
+
+  const u32x a0 = h32_from_64 (v);
+  const u32x a1 = l32_from_64 (v);
+
+  u32x t0 = hc_swap32 (a0);
+  u32x t1 = hc_swap32 (a1);
+
+  r = hl32_to_64 (t1, t0);
+
   #else
 
   #if defined USE_BITSELECT && defined USE_ROTATE
@@ -1351,7 +1361,7 @@ DECLSPEC u64 hc_swap64_S (const u64 v)
 {
   u64 r;
 
-  #ifdef _CPU_OPENCL_EMU_H
+  #ifdef HC_CPU_OPENCL_EMU_H
   r = byte_swap_64 (v);
   #else
   #if   (defined IS_AMD || defined IS_HIP) && HAS_VPERM == 1
@@ -1380,7 +1390,19 @@ DECLSPEC u64 hc_swap64_S (const u64 v)
   asm volatile ("prmt.b32 %0, %1, 0, 0x0123;" : "=r"(tr) : "r"(ir));
 
   asm volatile ("mov.b64 %0, {%1, %2};" : "=l"(r) : "r"(tr), "r"(tl));
+
+  #elif defined IS_METAL
+
+  const u32 v0 = h32_from_64_S (v);
+  const u32 v1 = l32_from_64_S (v);
+
+  u32 t0 = hc_swap32_S (v0);
+  u32 t1 = hc_swap32_S (v1);
+
+  r = hl32_to_64_S (t1, t0);
+
   #else
+
   #ifdef USE_SWIZZLE
   r = as_ulong (as_uchar8 (v).s76543210);
   #else
@@ -2242,11 +2264,13 @@ DECLSPEC int hc_enc_next (PRIVATE_AS hc_enc_t *hc_enc, PRIVATE_AS const u32 *src
 
     if (c >= 0xfc)
     {
-      extraBytesToRead = 5;
+      // old version, doesnt work with https://github.com/hashcat/hashcat/issues/3592
+      //extraBytesToRead = 5;
     }
     else if (c >= 0xf8)
     {
-      extraBytesToRead = 4;
+      // old version, doesnt work with https://github.com/hashcat/hashcat/issues/3592
+      //extraBytesToRead = 4;
     }
     else if (c >= 0xf0)
     {
@@ -2283,9 +2307,11 @@ DECLSPEC int hc_enc_next (PRIVATE_AS hc_enc_t *hc_enc, PRIVATE_AS const u32 *src
 
     switch (extraBytesToRead)
     {
+      // old version, doesnt work with https://github.com/hashcat/hashcat/issues/3592
+      /*
       case 5:
-        ch += src_ptr[src_pos++]; ch <<= 6; /* remember, illegal UTF-8 */
-        ch += src_ptr[src_pos++]; ch <<= 6; /* remember, illegal UTF-8 */
+        ch += src_ptr[src_pos++]; ch <<= 6; // remember, illegal UTF-8
+        ch += src_ptr[src_pos++]; ch <<= 6; // remember, illegal UTF-8
         ch += src_ptr[src_pos++]; ch <<= 6;
         ch += src_ptr[src_pos++]; ch <<= 6;
         ch += src_ptr[src_pos++]; ch <<= 6;
@@ -2293,13 +2319,14 @@ DECLSPEC int hc_enc_next (PRIVATE_AS hc_enc_t *hc_enc, PRIVATE_AS const u32 *src
         ch -= offsetsFromUTF8_5;
         break;
       case 4:
-        ch += src_ptr[src_pos++]; ch <<= 6; /* remember, illegal UTF-8 */
+        ch += src_ptr[src_pos++]; ch <<= 6; // remember, illegal UTF-8
         ch += src_ptr[src_pos++]; ch <<= 6;
         ch += src_ptr[src_pos++]; ch <<= 6;
         ch += src_ptr[src_pos++]; ch <<= 6;
         ch += src_ptr[src_pos++];
         ch -= offsetsFromUTF8_4;
         break;
+      */
       case 3:
         ch += src_ptr[src_pos++]; ch <<= 6;
         ch += src_ptr[src_pos++]; ch <<= 6;
@@ -2388,11 +2415,13 @@ DECLSPEC int hc_enc_next_global (PRIVATE_AS hc_enc_t *hc_enc, GLOBAL_AS const u3
 
     if (c >= 0xfc)
     {
-      extraBytesToRead = 5;
+      // old version, doesnt work with https://github.com/hashcat/hashcat/issues/3592
+      //extraBytesToRead = 5;
     }
     else if (c >= 0xf8)
     {
-      extraBytesToRead = 4;
+      // old version, doesnt work with https://github.com/hashcat/hashcat/issues/3592
+      //extraBytesToRead = 4;
     }
     else if (c >= 0xf0)
     {
@@ -2429,9 +2458,11 @@ DECLSPEC int hc_enc_next_global (PRIVATE_AS hc_enc_t *hc_enc, GLOBAL_AS const u3
 
     switch (extraBytesToRead)
     {
+      // old version, doesnt work with https://github.com/hashcat/hashcat/issues/3592
+      /*
       case 5:
-        ch += src_ptr[src_pos++]; ch <<= 6; /* remember, illegal UTF-8 */
-        ch += src_ptr[src_pos++]; ch <<= 6; /* remember, illegal UTF-8 */
+        ch += src_ptr[src_pos++]; ch <<= 6; // remember, illegal UTF-8
+        ch += src_ptr[src_pos++]; ch <<= 6; // remember, illegal UTF-8
         ch += src_ptr[src_pos++]; ch <<= 6;
         ch += src_ptr[src_pos++]; ch <<= 6;
         ch += src_ptr[src_pos++]; ch <<= 6;
@@ -2439,13 +2470,14 @@ DECLSPEC int hc_enc_next_global (PRIVATE_AS hc_enc_t *hc_enc, GLOBAL_AS const u3
         ch -= offsetsFromUTF8_5;
         break;
       case 4:
-        ch += src_ptr[src_pos++]; ch <<= 6; /* remember, illegal UTF-8 */
+        ch += src_ptr[src_pos++]; ch <<= 6; // remember, illegal UTF-8
         ch += src_ptr[src_pos++]; ch <<= 6;
         ch += src_ptr[src_pos++]; ch <<= 6;
         ch += src_ptr[src_pos++]; ch <<= 6;
         ch += src_ptr[src_pos++];
         ch -= offsetsFromUTF8_4;
         break;
+      */
       case 3:
         ch += src_ptr[src_pos++]; ch <<= 6;
         ch += src_ptr[src_pos++]; ch <<= 6;
@@ -2792,6 +2824,24 @@ DECLSPEC int is_valid_base58_32 (const u32 v)
   if (is_valid_base58_8 ((u8) (v >>  8)) == 0) return 0;
   if (is_valid_base58_8 ((u8) (v >> 16)) == 0) return 0;
   if (is_valid_base58_8 ((u8) (v >> 24)) == 0) return 0;
+
+  return 1;
+}
+
+DECLSPEC int is_valid_printable_8 (const u8 v)
+{
+  if (v > (u8) 0x7e) return 0;
+  if (v < (u8) 0x20) return 0;
+
+  return 1;
+}
+
+DECLSPEC int is_valid_printable_32 (const u32 v)
+{
+  if (is_valid_printable_8 ((u8) (v >>  0)) == 0) return 0;
+  if (is_valid_printable_8 ((u8) (v >>  8)) == 0) return 0;
+  if (is_valid_printable_8 ((u8) (v >> 16)) == 0) return 0;
+  if (is_valid_printable_8 ((u8) (v >> 24)) == 0) return 0;
 
   return 1;
 }
@@ -36655,6 +36705,20 @@ DECLSPEC void append_0x2d_4x4_S (PRIVATE_AS u32 *w0, PRIVATE_AS u32 *w1, PRIVATE
   append_helper_1x4_S (w3, ((offset16 == 3) ? 0x2d2d2d2d : 0), v);
 }
 
+DECLSPEC void append_0x3a_4x4_S (PRIVATE_AS u32 *w0, PRIVATE_AS u32 *w1, PRIVATE_AS u32 *w2, PRIVATE_AS u32 *w3, const u32 offset)
+{
+  u32 v[4];
+
+  set_mark_1x4_S (v, offset);
+
+  const u32 offset16 = offset / 16;
+
+  append_helper_1x4_S (w0, ((offset16 == 0) ? 0x3a3a3a3a : 0), v);
+  append_helper_1x4_S (w1, ((offset16 == 1) ? 0x3a3a3a3a : 0), v);
+  append_helper_1x4_S (w2, ((offset16 == 2) ? 0x3a3a3a3a : 0), v);
+  append_helper_1x4_S (w3, ((offset16 == 3) ? 0x3a3a3a3a : 0), v);
+}
+
 DECLSPEC void append_0x80_1x4_S (PRIVATE_AS u32 *w0, const u32 offset)
 {
   u32 v[4];
@@ -36755,6 +36819,44 @@ DECLSPEC void make_utf16be_S (PRIVATE_AS const u32 *in, PRIVATE_AS u32 *out1, PR
   out1[2] = ((in[1] << 16) & 0xFF000000) | ((in[1] << 8) & 0x0000FF00);
   out1[1] = ((in[0] >>  0) & 0xFF000000) | ((in[0] >> 8) & 0x0000FF00);
   out1[0] = ((in[0] << 16) & 0xFF000000) | ((in[0] << 8) & 0x0000FF00);
+
+  #endif
+}
+
+DECLSPEC void make_utf16beN_S (PRIVATE_AS const u32 *in, PRIVATE_AS u32 *out1, PRIVATE_AS u32 *out2)
+{
+  #if defined IS_NV
+
+  out2[3] = hc_byte_perm_S (in[3], 0, 0x1707);
+  out2[2] = hc_byte_perm_S (in[3], 0, 0x3727);
+  out2[1] = hc_byte_perm_S (in[2], 0, 0x1707);
+  out2[0] = hc_byte_perm_S (in[2], 0, 0x3727);
+  out1[3] = hc_byte_perm_S (in[1], 0, 0x1707);
+  out1[2] = hc_byte_perm_S (in[1], 0, 0x3727);
+  out1[1] = hc_byte_perm_S (in[0], 0, 0x1707);
+  out1[0] = hc_byte_perm_S (in[0], 0, 0x3727);
+
+  #elif (defined IS_AMD || defined IS_HIP) && HAS_VPERM == 1
+
+  out2[3] = hc_byte_perm_S (in[3], 0, 0x01070007);
+  out2[2] = hc_byte_perm_S (in[3], 0, 0x03070207);
+  out2[1] = hc_byte_perm_S (in[2], 0, 0x01070007);
+  out2[0] = hc_byte_perm_S (in[2], 0, 0x03070207);
+  out1[3] = hc_byte_perm_S (in[1], 0, 0x01070007);
+  out1[2] = hc_byte_perm_S (in[1], 0, 0x03070207);
+  out1[1] = hc_byte_perm_S (in[0], 0, 0x01070007);
+  out1[0] = hc_byte_perm_S (in[0], 0, 0x03070207);
+
+  #else
+
+  out2[3] = ((in[3] << 16) & 0xFF000000) | ((in[3] << 8) & 0x0000FF00);
+  out2[2] = ((in[3] >>  0) & 0xFF000000) | ((in[3] >> 8) & 0x0000FF00);
+  out2[1] = ((in[2] << 16) & 0xFF000000) | ((in[2] << 8) & 0x0000FF00);
+  out2[0] = ((in[2] >>  0) & 0xFF000000) | ((in[2] >> 8) & 0x0000FF00);
+  out1[3] = ((in[1] << 16) & 0xFF000000) | ((in[1] << 8) & 0x0000FF00);
+  out1[2] = ((in[1] >>  0) & 0xFF000000) | ((in[1] >> 8) & 0x0000FF00);
+  out1[1] = ((in[0] << 16) & 0xFF000000) | ((in[0] << 8) & 0x0000FF00);
+  out1[0] = ((in[0] >>  0) & 0xFF000000) | ((in[0] >> 8) & 0x0000FF00);
 
   #endif
 }
@@ -69007,6 +69109,66 @@ DECLSPEC void append_0x2d_4x4_VV (PRIVATE_AS u32x *w0, PRIVATE_AS u32x *w1, PRIV
   PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, d); append_0x2d_4x4_S (t0, t1, t2, t3, offset.sd); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, d);
   PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, e); append_0x2d_4x4_S (t0, t1, t2, t3, offset.se); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, e);
   PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, f); append_0x2d_4x4_S (t0, t1, t2, t3, offset.sf); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, f);
+
+  #endif
+}
+
+DECLSPEC void append_0x3a_4x4_VV (PRIVATE_AS u32x *w0, PRIVATE_AS u32x *w1, PRIVATE_AS u32x *w2, PRIVATE_AS u32x *w3, const u32x offset)
+{
+  #if VECT_SIZE == 1
+
+  append_0x3a_4x4_S (w0, w1, w2, w3, offset);
+
+  #else
+
+  u32 t0[4];
+  u32 t1[4];
+  u32 t2[4];
+  u32 t3[4];
+
+  #endif
+
+  #if   VECT_SIZE == 2
+
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, 0); append_0x3a_4x4_S (t0, t1, t2, t3, offset.s0); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, 0);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, 1); append_0x3a_4x4_S (t0, t1, t2, t3, offset.s1); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, 1);
+
+  #elif VECT_SIZE == 4
+
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, 0); append_0x3a_4x4_S (t0, t1, t2, t3, offset.s0); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, 0);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, 1); append_0x3a_4x4_S (t0, t1, t2, t3, offset.s1); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, 1);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, 2); append_0x3a_4x4_S (t0, t1, t2, t3, offset.s2); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, 2);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, 3); append_0x3a_4x4_S (t0, t1, t2, t3, offset.s3); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, 3);
+
+  #elif VECT_SIZE == 8
+
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, 0); append_0x3a_4x4_S (t0, t1, t2, t3, offset.s0); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, 0);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, 1); append_0x3a_4x4_S (t0, t1, t2, t3, offset.s1); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, 1);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, 2); append_0x3a_4x4_S (t0, t1, t2, t3, offset.s2); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, 2);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, 3); append_0x3a_4x4_S (t0, t1, t2, t3, offset.s3); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, 3);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, 4); append_0x3a_4x4_S (t0, t1, t2, t3, offset.s4); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, 4);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, 5); append_0x3a_4x4_S (t0, t1, t2, t3, offset.s5); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, 5);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, 6); append_0x3a_4x4_S (t0, t1, t2, t3, offset.s6); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, 6);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, 7); append_0x3a_4x4_S (t0, t1, t2, t3, offset.s7); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, 7);
+
+  #elif VECT_SIZE == 16
+
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, 0); append_0x3a_4x4_S (t0, t1, t2, t3, offset.s0); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, 0);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, 1); append_0x3a_4x4_S (t0, t1, t2, t3, offset.s1); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, 1);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, 2); append_0x3a_4x4_S (t0, t1, t2, t3, offset.s2); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, 2);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, 3); append_0x3a_4x4_S (t0, t1, t2, t3, offset.s3); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, 3);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, 4); append_0x3a_4x4_S (t0, t1, t2, t3, offset.s4); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, 4);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, 5); append_0x3a_4x4_S (t0, t1, t2, t3, offset.s5); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, 5);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, 6); append_0x3a_4x4_S (t0, t1, t2, t3, offset.s6); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, 6);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, 7); append_0x3a_4x4_S (t0, t1, t2, t3, offset.s7); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, 7);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, 8); append_0x3a_4x4_S (t0, t1, t2, t3, offset.s8); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, 8);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, 9); append_0x3a_4x4_S (t0, t1, t2, t3, offset.s9); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, 9);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, a); append_0x3a_4x4_S (t0, t1, t2, t3, offset.sa); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, a);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, b); append_0x3a_4x4_S (t0, t1, t2, t3, offset.sb); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, b);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, c); append_0x3a_4x4_S (t0, t1, t2, t3, offset.sc); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, c);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, d); append_0x3a_4x4_S (t0, t1, t2, t3, offset.sd); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, d);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, e); append_0x3a_4x4_S (t0, t1, t2, t3, offset.se); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, e);
+  PACKVS44 (t0, t1, t2, t3, w0, w1, w2, w3, f); append_0x3a_4x4_S (t0, t1, t2, t3, offset.sf); PACKSV44 (t0, t1, t2, t3, w0, w1, w2, w3, f);
 
   #endif
 }
